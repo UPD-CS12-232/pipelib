@@ -5,10 +5,6 @@ description = ""
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
 
-packages = [
-    { include = "pipelib", from = "pipelib/src" }
-]
-
 include = ["pipelib/pipe.pyxres"]
 
 [tool.poetry.dependencies]
