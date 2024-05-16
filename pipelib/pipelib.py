@@ -65,6 +65,7 @@ from dataclasses import dataclass
 from itertools import islice
 from random import Random
 from typing import Final, TypeVar
+import importlib.resources
 
 import pyxel
 
@@ -77,7 +78,7 @@ DIM: Final[int] = 16
 # vectors toward the four cardinal directions
 DIJS: Final[tuple[tuple[int, int], ...]] = (-1, 0), (0, +1), (+1, 0), (0, -1)
 # Pyxel resource file that needs to be loaded
-PIPE_RESOURCE_PATH: Final[str] = 'pipe.pyxres'
+PIPE_RESOURCE_PATH: Final[str] = str(importlib.resources.files('pipelib').joinpath('pipe.pyxres'))
 # tilemap from the resource file to use
 TILEMAP_PIPE: Final[int] = 0
 # background color of the resource file tilemaps
