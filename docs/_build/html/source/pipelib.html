@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pipelib module &mdash; pipelib  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Welcome to pipelib’s documentation!" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pipelib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">pipelib module</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pipelib.DifficultySettings"><code class="docutils literal notranslate"><span class="pre">DifficultySettings</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pipelib.draw_pipe"><code class="docutils literal notranslate"><span class="pre">draw_pipe()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pipelib.generate_paths"><code class="docutils literal notranslate"><span class="pre">generate_paths()</span></code></a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pipelib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">pipelib module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/pipelib.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-pipelib">
+<span id="pipelib-module"></span><h1>pipelib module<a class="headerlink" href="#module-pipelib" title="Link to this heading"></a></h1>
+<p>Helper library to implement the “Pipe Dream” game.</p>
+<p>Aside from the global constants, the most important functions here are <cite>generate_paths</cite> (which
+generate disjoint paths, for use in generating solvable puzzles) and <cite>draw_pipe</cite> (which draws a
+pipe piece). The <cite>DifficultySettings</cite> dataclass as well as the <cite>DIFFICULTY_SETTINGS</cite> global constant
+are also needed.</p>
+<p>At initialization time, you should load the Pyxel resource file with the filename
+<cite>PIPE_RESOURCE_PATH</cite> (equal to <cite>“pipe.pyxres”</cite>, which must be present in the game directory).</p>
+<p>The following global constants are useful:</p>
+<blockquote>
+<div><p>DIM: int</p>
+<blockquote>
+<div><p>cell dimension size (width and height in pixels)</p>
+</div></blockquote>
+<p>DIJS: tuple[tuple[int, int], …]</p>
+<blockquote>
+<div><p>vectors toward the four cardinal directions</p>
+</div></blockquote>
+<p>PIPE_RESOURCE_PATH: str</p>
+<blockquote>
+<div><p>Pyxel resource file that needs to be loaded</p>
+</div></blockquote>
+<p>TILEMAP_PIPE: int</p>
+<blockquote>
+<div><p>tilemap from the resource file to use</p>
+</div></blockquote>
+<p>COLOR_BG_PIPE: int</p>
+<blockquote>
+<div><p>background color of the resource file tilemaps</p>
+</div></blockquote>
+<p>SFX_PRESS_SUCCESS: int</p>
+<blockquote>
+<div><p>sound effect to be played when the player successfully rotates a pipe</p>
+</div></blockquote>
+<p>SFX_PRESS_FAIL: int</p>
+<blockquote>
+<div><p>sound effect to be played when the player attempts to rotate a pipe piece cannot be rotated
+(i.e., “endpoint” pipe pieces)</p>
+</div></blockquote>
+<p>SFX_INCREASED_ACTIVE_PIPES: int</p>
+<blockquote>
+<div><p>sound effect to be played when the player connects a pair of endpoint pipes</p>
+</div></blockquote>
+<p>SFX_WIN: int</p>
+<blockquote>
+<div><p>sound effect to be played when the game is won</p>
+</div></blockquote>
+<p>COLOR_TEXT_INACTIVE: int</p>
+<blockquote>
+<div><p>text color to use over “inactive” (blue) pipes</p>
+</div></blockquote>
+<p>COLOR_TEXT_ACTIVE: int</p>
+<blockquote>
+<div><p>text color to use over “active” (green) pipes</p>
+</div></blockquote>
+</div></blockquote>
+<dl class="py class">
+<dt class="sig sig-object py" id="pipelib.DifficultySettings">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">pipelib.</span></span><span class="sig-name descname"><span class="pre">DifficultySettings</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">r</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">endcl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pathl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">attemptc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipelib.html#DifficultySettings"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pipelib.DifficultySettings" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Settings for a particular difficulty.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pipelib.draw_pipe">
+<span class="sig-prename descclassname"><span class="pre">pipelib.</span></span><span class="sig-name descname"><span class="pre">draw_pipe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">active</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">north</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">south</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">east</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">west</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">base</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipelib.html#draw_pipe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pipelib.draw_pipe" title="Link to this definition"></a></dt>
+<dd><p>Draw a ‘pipe’ piece with the given configuration at (x, y).</p>
+<p>The pipe will be drawn with top-left corner (x, y), <cite>DIM</cite> pixels long and <cite>DIM</cite> pixels wide.</p>
+<p>The arguments <cite>north</cite>, <cite>south</cite>, <cite>east</cite> and <cite>west</cite> represent which directions the pipe
+connects/attaches to. For typical pipes, exactly two of these must  be <cite>True</cite>.</p>
+<p>The argument <cite>base</cite> represents whether or not this pipe piece represents an
+“endpoint” piece. If it is <cite>True</cite>, then this pipe piece must connect to exactly one neighbor.</p>
+<p>The <cite>active</cite> argument represents whether the pipe piece is highlighted green. It is intended to
+be used when the pipe piece is part of a path that connects two “endpoint” pieces.</p>
+<p>The <cite>bg</cite> argument represents whether or not to make the “black” piece transparent.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="pipelib.generate_paths">
+<span class="sig-prename descclassname"><span class="pre">pipelib.</span></span><span class="sig-name descname"><span class="pre">generate_paths</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">settings:</span> <span class="pre">~pipelib.DifficultySettings</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rand:</span> <span class="pre">~random.Random</span> <span class="pre">=</span> <span class="pre">&lt;random.Random</span> <span class="pre">object&gt;</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/pipelib.html#generate_paths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#pipelib.generate_paths" title="Link to this definition"></a></dt>
+<dd><p>Generate a list of disjoint paths in a grid, given the difficulty settings.</p>
+<p>This is meant to be used to generate “solvable” pipe puzzles. The paths themselves can be used
+for the “solution” of the puzzle. (Other solutions may exist—the game must be able to handle
+those as well.)</p>
+<p>A path is assumed to be a sequence of cells, i.e., of type <cite>list[tuple[int, int]]</cite>.</p>
+<p>The <cite>rand</cite> argument is optional.</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to pipelib’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, cs12232.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

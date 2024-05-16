@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>pipelib &mdash; pipelib  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            pipelib
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../source/pipelib.html">pipelib module</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pipelib</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">pipelib</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for pipelib</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pyright: strict</span>
+
+<span class="sd">&quot;&quot;&quot;Helper library to implement the &quot;Pipe Dream&quot; game.</span>
+
+<span class="sd">Aside from the global constants, the most important functions here are `generate_paths` (which</span>
+<span class="sd">generate disjoint paths, for use in generating solvable puzzles) and `draw_pipe` (which draws a</span>
+<span class="sd">pipe piece). The `DifficultySettings` dataclass as well as the `DIFFICULTY_SETTINGS` global constant</span>
+<span class="sd">are also needed.</span>
+
+<span class="sd">At initialization time, you should load the Pyxel resource file with the filename</span>
+<span class="sd">`PIPE_RESOURCE_PATH` (equal to `&quot;pipe.pyxres&quot;`, which must be present in the game directory).</span>
+
+<span class="sd">The following global constants are useful:</span>
+
+<span class="sd">    DIM: int</span>
+
+<span class="sd">        cell dimension size (width and height in pixels)</span>
+
+<span class="sd">    DIJS: tuple[tuple[int, int], ...]</span>
+
+<span class="sd">        vectors toward the four cardinal directions</span>
+
+<span class="sd">    PIPE_RESOURCE_PATH: str</span>
+
+<span class="sd">        Pyxel resource file that needs to be loaded</span>
+
+<span class="sd">    TILEMAP_PIPE: int</span>
+
+<span class="sd">        tilemap from the resource file to use</span>
+
+<span class="sd">    COLOR_BG_PIPE: int</span>
+
+<span class="sd">        background color of the resource file tilemaps</span>
+
+<span class="sd">    SFX_PRESS_SUCCESS: int</span>
+
+<span class="sd">        sound effect to be played when the player successfully rotates a pipe</span>
+
+<span class="sd">    SFX_PRESS_FAIL: int</span>
+
+<span class="sd">        sound effect to be played when the player attempts to rotate a pipe piece cannot be rotated</span>
+<span class="sd">        (i.e., &quot;endpoint&quot; pipe pieces)</span>
+
+<span class="sd">    SFX_INCREASED_ACTIVE_PIPES: int</span>
+
+<span class="sd">        sound effect to be played when the player connects a pair of endpoint pipes</span>
+
+<span class="sd">    SFX_WIN: int</span>
+
+<span class="sd">        sound effect to be played when the game is won</span>
+
+<span class="sd">    COLOR_TEXT_INACTIVE: int</span>
+
+<span class="sd">        text color to use over &quot;inactive&quot; (blue) pipes</span>
+
+<span class="sd">    COLOR_TEXT_ACTIVE: int</span>
+
+<span class="sd">        text color to use over &quot;active&quot; (green) pipes</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span>
+<span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span>
+<span class="kn">from</span> <span class="nn">random</span> <span class="kn">import</span> <span class="n">Random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Final</span>
+
+<span class="kn">import</span> <span class="nn">pyxel</span>
+
+<span class="c1"># cell dimension size (width and height in pixels)</span>
+<span class="n">DIM</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">16</span>
+<span class="c1"># vectors toward the four cardinal directions</span>
+<span class="n">DIJS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Pyxel resource file that needs to be loaded</span>
+<span class="n">PIPE_RESOURCE_PATH</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pipe.pyxres&#39;</span>
+<span class="c1"># tilemap from the resource file to use</span>
+<span class="n">TILEMAP_PIPE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="c1"># background color of the resource file tilemaps</span>
+<span class="n">COLOR_BG_PIPE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="c1"># sound effect to be played when the player successfully rotates a pipe</span>
+<span class="n">SFX_PRESS_SUCCESS</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="c1"># sound effect to be played when the player attempts to rotate a pipe piece cannot be rotated</span>
+<span class="c1"># (i.e., &quot;endpoint&quot; pipe pieces)</span>
+<span class="n">SFX_PRESS_FAIL</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">SFX_PRESS_FAIL_ALT</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span>
+<span class="c1"># sound effect to be played when the player connects a pair of endpoint pipes</span>
+<span class="n">SFX_INCREASED_ACTIVE_PIPES</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="c1"># sound effect to be played when the game is won</span>
+<span class="n">SFX_WIN</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">SFX_WIN_ALT</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">9</span>
+<span class="c1"># text color to use over &quot;inactive&quot; (blue) pipes</span>
+<span class="n">COLOR_TEXT_INACTIVE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">15</span>
+<span class="c1"># text color to use over &quot;active&quot; (green) pipes</span>
+<span class="n">COLOR_TEXT_ACTIVE</span><span class="p">:</span> <span class="n">Final</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">14</span>
+
+
+<div class="viewcode-block" id="DifficultySettings">
+<a class="viewcode-back" href="../source/pipelib.html#pipelib.DifficultySettings">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span> <span class="nc">DifficultySettings</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Settings for a particular difficulty.&quot;&quot;&quot;</span>
+    <span class="n">r</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">c</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">endcl</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">pathl</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">distl</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">attemptc</span><span class="p">:</span> <span class="nb">int</span></div>
+
+
+
+<span class="c1"># settings for the four &quot;difficulties&quot; trivial, easy, medium and hard</span>
+<span class="n">DIFFICULTY_SETTINGS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;trivial&#39;</span><span class="p">:</span> <span class="n">DifficultySettings</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>  <span class="n">c</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>  <span class="n">endcl</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>  <span class="n">pathl</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distl</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">attemptc</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="s1">&#39;easy&#39;</span><span class="p">:</span>    <span class="n">DifficultySettings</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>  <span class="n">c</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>  <span class="n">endcl</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>  <span class="n">pathl</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">distl</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">attemptc</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+    <span class="s1">&#39;medium&#39;</span><span class="p">:</span>  <span class="n">DifficultySettings</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">endcl</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>  <span class="n">pathl</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">distl</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">attemptc</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+    <span class="s1">&#39;hard&#39;</span><span class="p">:</span>    <span class="n">DifficultySettings</span><span class="p">(</span><span class="n">r</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">endcl</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">pathl</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">distl</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">attemptc</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+<span class="p">}</span>
+
+
+<div class="viewcode-block" id="dist">
+<a class="viewcode-back" href="../source/pipelib.html#pipelib.dist">[docs]</a>
+<span class="k">def</span> <span class="nf">dist</span><span class="p">(</span><span class="n">i1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">j1</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">i2</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">j2</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">abs</span><span class="p">(</span><span class="n">i1</span> <span class="o">-</span> <span class="n">i2</span><span class="p">)</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">j1</span> <span class="o">-</span> <span class="n">j2</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="shuffled">
+<a class="viewcode-back" href="../source/pipelib.html#pipelib.shuffled">[docs]</a>
+<span class="k">def</span> <span class="nf">shuffled</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">rand</span><span class="p">:</span> <span class="n">Random</span><span class="p">,</span> <span class="n">seq</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span>
+    <span class="n">seql</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+    <span class="n">rand</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">seql</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">seql</span></div>
+
+
+
+<div class="viewcode-block" id="randpop">
+<a class="viewcode-back" href="../source/pipelib.html#pipelib.randpop">[docs]</a>
+<span class="k">def</span> <span class="nf">randpop</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">rand</span><span class="p">:</span> <span class="n">Random</span><span class="p">,</span> <span class="n">seq</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">T</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">T</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">seq</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The input sequence must not be empty&quot;</span><span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">))</span>
+    <span class="n">seq</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">seq</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_try_generating_paths</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="n">DifficultySettings</span><span class="p">,</span> <span class="n">rand</span><span class="p">:</span> <span class="n">Random</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">r</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">c</span>
+    <span class="n">endcl</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">endcl</span>
+
+    <span class="n">adj</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">):</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">c</span><span class="p">)}</span>
+
+    <span class="n">strands</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">strandi</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">strandi</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">r</span> <span class="o">*</span> <span class="n">c</span><span class="p">:</span>
+        <span class="n">seeds</span> <span class="o">=</span> <span class="n">shuffled</span><span class="p">(</span><span class="n">rand</span><span class="p">,</span> <span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">strandi</span><span class="p">))</span>
+
+        <span class="n">seeds</span> <span class="o">=</span> <span class="n">seeds</span><span class="p">[:</span><span class="n">endcl</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">seeds</span><span class="p">:</span>
+            <span class="n">strandi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">strands</span><span class="p">)</span>
+            <span class="n">strands</span><span class="o">.</span><span class="n">append</span><span class="p">([(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)])</span>
+
+        <span class="n">seeds</span> <span class="o">+=</span> <span class="n">seeds</span>
+
+        <span class="k">while</span> <span class="n">seeds</span><span class="p">:</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">randpop</span><span class="p">(</span><span class="n">rand</span><span class="p">,</span> <span class="n">seeds</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="n">strandi</span>
+
+            <span class="k">def</span> <span class="nf">good_neighbors</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+                <span class="k">for</span> <span class="n">di</span><span class="p">,</span> <span class="n">dj</span> <span class="ow">in</span> <span class="n">DIJS</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">ni</span> <span class="o">:=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">di</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">r</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="p">(</span><span class="n">nj</span> <span class="o">:=</span> <span class="n">j</span> <span class="o">+</span> <span class="n">dj</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">c</span> <span class="ow">and</span> <span class="p">(</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">strandi</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">ni</span><span class="p">,</span> <span class="n">nj</span>
+
+            <span class="k">if</span> <span class="n">neighs</span> <span class="o">:=</span> <span class="p">[</span><span class="o">*</span><span class="n">good_neighbors</span><span class="p">()]:</span>
+                <span class="n">ni</span><span class="p">,</span> <span class="n">nj</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">neighs</span><span class="p">)</span>
+
+                <span class="c1"># attach now</span>
+                <span class="n">adj</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">))</span>
+                <span class="n">adj</span><span class="p">[</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+                <span class="n">strandi</span><span class="p">[</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">]</span> <span class="o">=</span> <span class="n">strandi</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span>
+                <span class="n">strands</span><span class="p">[</span><span class="n">strandi</span><span class="p">[</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">))</span>
+                <span class="n">seeds</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ni</span><span class="p">,</span> <span class="n">nj</span><span class="p">))</span>
+
+        <span class="n">strands</span> <span class="o">=</span> <span class="p">[</span><span class="n">strand</span> <span class="k">for</span> <span class="n">strand</span> <span class="ow">in</span> <span class="n">strands</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">strand</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">cleanse</span><span class="p">(</span><span class="n">strand</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+        <span class="p">[</span><span class="n">scell</span><span class="p">,</span> <span class="n">ecell</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">cell</span> <span class="k">for</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">strand</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">adj</span><span class="p">[</span><span class="n">cell</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">seq</span><span class="p">:</span> <span class="n">deque</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="n">deque</span><span class="p">([</span><span class="n">scell</span><span class="p">,</span> <span class="n">scell</span><span class="p">])</span>
+        <span class="k">while</span> <span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">ecell</span><span class="p">:</span>
+            <span class="p">[</span><span class="n">ccell</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="o">*</span><span class="n">adj</span><span class="p">[</span><span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]}</span> <span class="o">-</span> <span class="p">{</span><span class="n">seq</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]}</span>
+            <span class="n">seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ccell</span><span class="p">)</span>
+
+        <span class="n">ct</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="o">-</span> <span class="n">settings</span><span class="o">.</span><span class="n">distl</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ct</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span> <span class="n">ct</span> <span class="o">=</span> <span class="n">rand</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">ct</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ct</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">rand</span><span class="o">.</span><span class="n">randrange</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
+                <span class="n">seq</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">seq</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">seq</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span>
+
+    <span class="n">rand</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">strands</span><span class="p">)</span>
+    <span class="n">strands</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="nb">len</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">shuffled</span><span class="p">(</span><span class="n">rand</span><span class="p">,</span> <span class="p">(</span><span class="n">cleanse</span><span class="p">(</span><span class="n">strand</span><span class="p">)</span> <span class="k">for</span> <span class="n">strand</span> <span class="ow">in</span> <span class="n">islice</span><span class="p">(</span><span class="n">strands</span><span class="p">,</span> <span class="n">endcl</span><span class="p">)))</span>
+
+
+<span class="k">def</span> <span class="nf">_acceptable</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="n">DifficultySettings</span><span class="p">,</span> <span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">settings</span><span class="o">.</span><span class="n">pathl</span> <span class="ow">and</span> <span class="n">dist</span><span class="p">(</span><span class="o">*</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">settings</span><span class="o">.</span><span class="n">distl</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_quality</span><span class="p">(</span><span class="n">paths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">**</span><span class="mf">1.5</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_generate_acceptable_paths</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="n">DifficultySettings</span><span class="p">,</span> <span class="n">rand</span><span class="p">:</span> <span class="n">Random</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]]:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">_acceptable</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">paths</span> <span class="o">:=</span> <span class="n">_try_generating_paths</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">rand</span><span class="p">)):</span>
+            <span class="k">yield</span> <span class="n">paths</span>
+
+
+<div class="viewcode-block" id="generate_paths">
+<a class="viewcode-back" href="../source/pipelib.html#pipelib.generate_paths">[docs]</a>
+<span class="k">def</span> <span class="nf">generate_paths</span><span class="p">(</span><span class="n">settings</span><span class="p">:</span> <span class="n">DifficultySettings</span><span class="p">,</span> <span class="n">rand</span><span class="p">:</span> <span class="n">Random</span> <span class="o">=</span> <span class="n">Random</span><span class="p">())</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a list of disjoint paths in a grid, given the difficulty settings.</span>
+
+<span class="sd">    This is meant to be used to generate &quot;solvable&quot; pipe puzzles. The paths themselves can be used</span>
+<span class="sd">    for the &quot;solution&quot; of the puzzle. (Other solutions may exist---the game must be able to handle</span>
+<span class="sd">    those as well.)</span>
+
+<span class="sd">    A path is assumed to be a sequence of cells, i.e., of type `list[tuple[int, int]]`.</span>
+
+<span class="sd">    The `rand` argument is optional.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="n">_generate_acceptable_paths</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="n">rand</span><span class="p">),</span> <span class="n">settings</span><span class="o">.</span><span class="n">attemptc</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">_quality</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span> <span class="nf">_ccw</span><span class="p">[</span><span class="n">T</span><span class="p">](</span><span class="n">seq1</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">seq2</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">T</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">seq1</span> <span class="o">==</span> <span class="n">seq2</span> <span class="k">else</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">_ccw</span><span class="p">(</span><span class="n">seq1</span><span class="p">,</span> <span class="p">(</span><span class="o">*</span><span class="n">seq2</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">*</span><span class="n">seq2</span><span class="p">[:</span><span class="mi">1</span><span class="p">]))</span>
+
+
+<div class="viewcode-block" id="draw_pipe">
+<a class="viewcode-back" href="../source/pipelib.html#pipelib.draw_pipe">[docs]</a>
+<span class="k">def</span> <span class="nf">draw_pipe</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+        <span class="n">active</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">north</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">south</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">east</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">west</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">base</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">bg</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Draw a &#39;pipe&#39; piece with the given configuration at (x, y).</span>
+
+<span class="sd">    The pipe will be drawn with top-left corner (x, y), `DIM` pixels long and `DIM` pixels wide.</span>
+<span class="sd">    </span>
+<span class="sd">    The arguments `north`, `south`, `east` and `west` represent which directions the pipe</span>
+<span class="sd">    connects/attaches to. For typical pipes, exactly two of these must  be `True`.</span>
+
+<span class="sd">    The argument `base` represents whether or not this pipe piece represents an</span>
+<span class="sd">    &quot;endpoint&quot; piece. If it is `True`, then this pipe piece must connect to exactly one neighbor.</span>
+
+<span class="sd">    The `active` argument represents whether the pipe piece is highlighted green. It is intended to</span>
+<span class="sd">    be used when the pipe piece is part of a path that connects two &quot;endpoint&quot; pieces.</span>
+
+<span class="sd">    The `bg` argument represents whether or not to make the &quot;black&quot; piece transparent.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">pyxel</span><span class="o">.</span><span class="n">pal</span><span class="p">()</span>
+    
+    <span class="c1"># palette swap if active is True</span>
+    <span class="k">if</span> <span class="n">active</span><span class="p">:</span>
+        <span class="n">pyxel</span><span class="o">.</span><span class="n">pal</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">pyxel</span><span class="o">.</span><span class="n">pal</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+        <span class="n">pyxel</span><span class="o">.</span><span class="n">pal</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">base</span> <span class="ow">and</span> <span class="n">north</span> <span class="o">+</span> <span class="n">south</span> <span class="o">+</span> <span class="n">east</span> <span class="o">+</span> <span class="n">west</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;If &#39;base&#39; is True, then the pipe piece must have exactly one opening&quot;</span><span class="p">)</span>
+
+    <span class="n">tx</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">base</span> <span class="k">else</span> <span class="n">_xoff</span><span class="p">[</span><span class="n">north</span><span class="p">,</span> <span class="n">east</span><span class="p">,</span> <span class="n">south</span><span class="p">,</span> <span class="n">west</span><span class="p">]</span>
+    <span class="n">ty</span> <span class="o">=</span> <span class="n">_ccw</span><span class="p">(</span><span class="n">_xstart</span><span class="p">[</span><span class="n">north</span><span class="p">,</span> <span class="n">east</span><span class="p">,</span> <span class="n">south</span><span class="p">,</span> <span class="n">west</span><span class="p">],</span> <span class="p">(</span><span class="n">north</span><span class="p">,</span> <span class="n">east</span><span class="p">,</span> <span class="n">south</span><span class="p">,</span> <span class="n">west</span><span class="p">))</span>
+
+    <span class="n">pyxel</span><span class="o">.</span><span class="n">blt</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">TILEMAP_PIPE</span><span class="p">,</span> <span class="n">DIM</span> <span class="o">*</span> <span class="n">tx</span><span class="p">,</span> <span class="n">DIM</span> <span class="o">*</span> <span class="n">ty</span><span class="p">,</span> <span class="n">DIM</span><span class="p">,</span> <span class="n">DIM</span><span class="p">,</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">bg</span> <span class="k">else</span> <span class="n">COLOR_BG_PIPE</span><span class="p">)</span>
+
+    <span class="n">pyxel</span><span class="o">.</span><span class="n">pal</span><span class="p">()</span></div>
+
+
+
+<span class="n">CWDirs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span>
+
+
+<span class="n">_xoff</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CWDirs</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">_xstart</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">CWDirs</span><span class="p">,</span> <span class="n">CWDirs</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+<span class="k">for</span> <span class="n">xo</span><span class="p">,</span> <span class="n">xb</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span>  <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span>  <span class="kc">True</span><span class="p">,</span>  <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span>  <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span>  <span class="kc">False</span><span class="p">)),</span>
+        <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span>  <span class="kc">True</span><span class="p">,</span>  <span class="kc">True</span><span class="p">,</span>  <span class="kc">False</span><span class="p">)),</span>
+        <span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="p">(</span><span class="kc">True</span><span class="p">,</span>  <span class="kc">True</span><span class="p">,</span>  <span class="kc">True</span><span class="p">,</span>  <span class="kc">True</span><span class="p">)),</span>
+    <span class="p">]:</span>
+    <span class="n">xc0</span><span class="p">,</span> <span class="n">xc1</span><span class="p">,</span> <span class="n">xc2</span><span class="p">,</span> <span class="n">xc3</span> <span class="o">=</span> <span class="n">xc</span> <span class="o">=</span> <span class="n">xb</span>
+    <span class="k">while</span> <span class="n">xc</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_xoff</span><span class="p">:</span>
+        <span class="n">_xoff</span><span class="p">[</span><span class="n">xc</span><span class="p">]</span> <span class="o">=</span> <span class="n">xo</span>
+        <span class="n">_xstart</span><span class="p">[</span><span class="n">xc</span><span class="p">]</span> <span class="o">=</span> <span class="n">xb</span>
+        <span class="n">xc0</span><span class="p">,</span> <span class="n">xc1</span><span class="p">,</span> <span class="n">xc2</span><span class="p">,</span> <span class="n">xc3</span> <span class="o">=</span> <span class="n">xc</span> <span class="o">=</span> <span class="n">xc3</span><span class="p">,</span> <span class="n">xc0</span><span class="p">,</span> <span class="n">xc1</span><span class="p">,</span> <span class="n">xc2</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, cs12232.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
