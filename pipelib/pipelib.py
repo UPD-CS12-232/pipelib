@@ -64,9 +64,13 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from itertools import islice
 from random import Random
-from typing import Final
+from typing import Final, TypeVar
 
 import pyxel
+
+
+T = TypeVar('T')
+
 
 # cell dimension size (width and height in pixels)
 DIM: Final[int] = 16
@@ -119,13 +123,13 @@ def dist(i1: int, j1: int, i2: int, j2: int) -> int:
     return abs(i1 - i2) + abs(j1 - j2)
 
 
-def shuffled[T](rand: Random, seq: Iterable[T]) -> list[T]:
+def shuffled(rand: Random, seq: Iterable[T]) -> list[T]:
     seql = list(seq)
     rand.shuffle(seql)
     return seql
 
 
-def randpop[T](rand: Random, seq: list[T]) -> T:
+def randpop(rand: Random, seq: list[T]) -> T:
     if not seq: raise ValueError("The input sequence must not be empty")
     idx = rand.randrange(len(seq))
     seq[idx], seq[-1] = seq[-1], seq[idx]
@@ -225,7 +229,7 @@ def generate_paths(settings: DifficultySettings, rand: Random = Random()) -> lis
     return max(islice(_generate_acceptable_paths(settings, rand), settings.attemptc), key=_quality)
 
 
-def _ccw[T](seq1: tuple[T, ...], seq2: tuple[T, ...]) -> int:
+def _ccw(seq1: tuple[T, ...], seq2: tuple[T, ...]) -> int:
     return 0 if seq1 == seq2 else 1 + _ccw(seq1, (*seq2[1:], *seq2[:1]))
 
 
@@ -262,7 +266,7 @@ def draw_pipe(x: int, y: int, *,
         pyxel.pal(12, 11)
 
     if base and north + south + east + west != 1:
-        raise ValueError(f"If 'base' is True, then the pipe piece must have exactly one opening")
+        raise ValueError("If 'base' is True, then the pipe piece must have exactly one opening")
 
     tx = 1 if base else _xoff[north, east, south, west]
     ty = _ccw(_xstart[north, east, south, west], (north, east, south, west))
